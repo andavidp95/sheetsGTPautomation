@@ -4,34 +4,27 @@ const puppeteer = require('puppeteer');
 const app = express();
 app.use(express.json());
 
-// Ruta para recibir solicitudes desde Google Sheets
+// Ruta principal para recibir solicitudes
 app.post('/run', async (req, res) => {
-  const { prompt } = req.body; // Recibe el contenido de la celda
-  try {
-    // Configuración de Puppeteer
-    const browser = await puppeteer.launch({
-      headless: false, // Cambiar a true si no quieres ver el navegador
-      args: ['--no-sandbox', '--disable-setuid-sandbox'], // Necesario en Railway
-    });
-    const page = await browser.newPage();
+  const { prompt } = req.body;
 
-    // Abrir ChatGPT
+  try {
+    const browser = await puppeteer.launch({
+      headless: true, // Cambia a false para depuración
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+
+    const page = await browser.newPage();
     await page.goto('https://chat.openai.com/');
 
-    // Esperar a que la página cargue
     await page.waitForSelector('textarea');
-
-    // Escribir el mensaje en el chat
     await page.type('textarea', prompt);
-    await page.keyboard.press('Enter'); // Simular presionar Enter
+    await page.keyboard.press('Enter');
 
-    // Opcional: Esperar unos segundos para verificar
-    await page.waitForTimeout(5000);
-
-    // Cerrar el navegador
+    await page.waitForTimeout(5000); // Esperar a que se cargue la respuesta
     await browser.close();
 
-    res.json({ success: true, message: 'Mensaje enviado a ChatGPT' });
+    res.status(200).json({ success: true, message: 'Mensaje enviado correctamente.' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: error.message });
